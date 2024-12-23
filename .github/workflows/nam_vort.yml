@@ -40,3 +40,4 @@ jobs:
           else
             git commit -m "Update NAM Vorticity Plots"
             git push origin main
+          fi
