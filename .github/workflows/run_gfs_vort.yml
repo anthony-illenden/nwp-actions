@@ -38,5 +38,6 @@ jobs:
           if git diff --staged --quiet; then
             echo "No changes to commit."
           else
-            git commit -m "Update gfs Vorticity Plots"
+            git commit -m "Update GFS Vorticity Plots"
             git push origin main
+          fi
