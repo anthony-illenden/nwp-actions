@@ -126,4 +126,4 @@ for i in range(0, 29):
     plt.colorbar(vort_cf, orientation='horizontal', label='Absolute Vorticity ($10^{-5}$ s$^{-1}$)', pad=0.05, aspect=50)
     plt.tight_layout()
     #plt.show()
-    plt.savefig(f'nam/vort/{hour_difference:.0f}.png')
+    plt.savefig(f'gfs/vort/{hour_difference:.0f}.png')
