@@ -122,4 +122,4 @@ for i in range(0, 29):
     plt.colorbar(dbz_cf, orientation='horizontal', label='Reflectivity (dBZ)', pad=0.05, aspect=50)
     plt.tight_layout()
     #plt.show()
-    plt.savefig('nam/sfc/{hour_difference:.0f}.png')
+    plt.savefig(f'nam/sfc/{hour_difference:.0f}.png')
