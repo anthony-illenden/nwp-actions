@@ -69,7 +69,7 @@ for dim, size in ds.dims.items():
         matching_dim = dim
         break  # Exit loop once a match is found
 
-for i in range(0, 1):
+for i in range(0, 29):
     ds_loop = ds.isel(time=i)
 
     # Extract the variables
