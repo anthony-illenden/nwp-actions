@@ -1,7 +1,6 @@
 name: Update NAM Vorticity Plots
 
 on:
-  push:
   schedule: 
     - cron: '00 2,8,14,20 * * *'  
 
