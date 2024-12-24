@@ -123,4 +123,3 @@ for i in range(0, 29):
     plt.tight_layout()
     #plt.show()
     plt.savefig(f'gfs/sfc/{hour_difference:.0f}.png')
-    plt.close()
