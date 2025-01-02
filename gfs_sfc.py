@@ -171,7 +171,7 @@ for i in range(0, 29, 2):
     plt.colorbar(dbz_cf, orientation='horizontal', label='Reflectivity (dBZ)', pad=0.05, aspect=50)
     plt.tight_layout()
     #plt.show()
-    plt.savefig(f'gfs/sfc/{hour_difference:.0f}.png')
+    plt.savefig(f'gfs/sfc/{hour_difference:.0f}.png', dpi=450)
     iteration_end = time.time()
     print(f'Iteration {i} Processing Time:', round((iteration_end - iteration_start), 2), 'seconds.')
 
