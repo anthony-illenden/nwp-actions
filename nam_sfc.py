@@ -129,7 +129,7 @@ for i in range(0, 29, 2):
     plt.title(f"{init_time_ts.strftime('%H00 UTC')} NAM 1000-500 hPa Thickness, MSLP, Reflectivity | {ds['time'][i].dt.strftime('%Y-%m-%d %H00 UTC').item()} | FH: {hour_difference:.0f}", fontsize=12)
     plt.colorbar(dbz_cf, orientation='horizontal', label='Reflectivity (dBZ)', pad=0.05, aspect=50)
     plt.tight_layout()
-    plt.savefig(f'nam/sfc/{hour_difference:.0f}.png')
+    plt.savefig(f'nam/sfc/{hour_difference:.0f}.png', dpi=450)
 
     iteration_end = time.time()
     print(f'Iteration {i} Processing Time:', round((iteration_end - iteration_start), 2), 'seconds.')
