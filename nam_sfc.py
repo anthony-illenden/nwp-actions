@@ -10,6 +10,11 @@ from scipy.ndimage import gaussian_filter
 from metpy.units import units
 import pandas as pd
 from metpy.plots import colortables
+import time
+
+print('---------------------------------------')
+print('NAM Surface Script - Script started.')
+print('---------------------------------------')
 
 def find_time_dim(ds, var_name):
     possible_time_dims = ['time', 'time1', 'time2', 'time3']
@@ -46,6 +51,8 @@ def find_press_var(var, time_basename='isobaric'):
             return var.coords[coord_name]
     raise ValueError('No time variable found for ' + var.name)
 
+script_start = time.time()
+
 tds_nam = TDSCatalog('https://thredds.ucar.edu/thredds/catalog/grib/NCEP/NAM/CONUS_12km/latest.html')
 nam_ds = tds_nam.datasets[0]
 ds = xr.open_dataset(nam_ds.access_urls['OPENDAP'])
@@ -67,9 +74,10 @@ matching_dim = None
 for dim, size in ds.dims.items():
     if size == target_length:
         matching_dim = dim
-        break  # Exit loop once a match is found
+        break  
 
-for i in range(0, 29):
+for i in range(0, 29, 2):
+    iteration_start = time.time()
     ds_loop = ds.isel(time=i)
 
     # Extract the variables
@@ -121,5 +129,9 @@ for i in range(0, 29):
     plt.title(f"{init_time_ts.strftime('%H00 UTC')} NAM 1000-500 hPa Thickness, MSLP, Reflectivity | {ds['time'][i].dt.strftime('%Y-%m-%d %H00 UTC').item()} | FH: {hour_difference:.0f}", fontsize=12)
     plt.colorbar(dbz_cf, orientation='horizontal', label='Reflectivity (dBZ)', pad=0.05, aspect=50)
     plt.tight_layout()
-    #plt.show()
     plt.savefig(f'nam/sfc/{hour_difference:.0f}.png')
+
+    iteration_end = time.time()
+    print(f'Iteration {i} Processing Time:', round((iteration_end - iteration_start), 2), 'seconds.')
+
+print('\nTotal Processing Time:', round((time.time() - script_start), 2), 'seconds.')
