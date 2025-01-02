@@ -7,6 +7,13 @@ from siphon.catalog import TDSCatalog
 import xarray as xr
 from scipy.ndimage import gaussian_filter
 from metpy.units import units
+import time
+
+script_start = time.time()
+
+print('---------------------------------------')
+print('GFS Vorticity Script - Script started.')
+print('---------------------------------------')
 
 def find_time_dim(ds, var_name):
     possible_time_dims = ['time', 'time1', 'time2', 'time3']
@@ -57,7 +64,7 @@ iso_dim = find_press_var(ds_latlon['Temperature_isobaric'])
 
 init_time = time_dim[0].values
 
-target_length = len(time_dim) - 1 
+target_length = len(time_dim)  
 
 # Initialize a variable to store the matching dimension name
 matching_dim = None
@@ -68,8 +75,9 @@ for dim, size in ds_latlon.dims.items():
         matching_dim = dim
         break  # Exit loop once a match is found
 
-for i in range(0, 29):
-    ds = ds_latlon.isel(time=i)
+for i in range(0, 29, 2):
+    iteration_start = time.time()
+    ds = ds_latlon.isel(**{matching_dim: i})
 
     # Extract the variables
     gph_500  = ds['Geopotential_height_isobaric'].sel(isobaric=50000) * units.meter
@@ -103,14 +111,14 @@ for i in range(0, 29):
 
     vort_cf = plt.contourf(lons, lats, absolute_vorticity_smoothed * 1e5, cmap='plasma_r', levels=np.arange(10,65,5), transform=ccrs.PlateCarree(), extend='max')
 
-    cadv = plt.contour(lons, lats, tadv_850_smoothed, levels=np.arange(-10, 0, 0.5), colors='blue', linewidths=0.75, linestyles='solid', transform=ccrs.PlateCarree())
+    cadv = plt.contour(lons, lats, tadv_850_smoothed, levels=np.arange(-10, -1, 0.5), colors='blue', linewidths=0.75, linestyles='solid', transform=ccrs.PlateCarree())
     try:
-        plt.clabel(cadv, fontsize=10, inline=1, inline_spacing=3, fmt='%d', rightside_up=True, use_clabeltext=True)
+        plt.clabel(cadv, fontsize=10, inline=1, inline_spacing=3, fmt='%.1f', rightside_up=True, use_clabeltext=True)
     except IndexError:
         print("No contours to label for cadv.")
-    wadv = ax.contour(lons, lats, tadv_850_smoothed, levels=np.arange(0.5, 10, 0.5), colors='red', linewidths=0.75, linestyles='solid', transform=ccrs.PlateCarree())
+    wadv = ax.contour(lons, lats, tadv_850_smoothed, levels=np.arange(1, 10, 0.5), colors='red', linewidths=0.75, linestyles='solid', transform=ccrs.PlateCarree())
     try:
-        plt.clabel(wadv, fontsize=10, inline=1, inline_spacing=3, fmt='%d', rightside_up=True, use_clabeltext=True)
+        plt.clabel(wadv, fontsize=10, inline=1, inline_spacing=3, fmt='%.1f', rightside_up=True, use_clabeltext=True)
     except IndexError:
         print("No contours to label for wadv.")
 
@@ -120,10 +128,15 @@ for i in range(0, 29):
     wadv_line = plt.Line2D([0], [0], color='red', linewidth=1, label='Warm Advection (K/hr)')
     ax.legend(handles=[isohypses_line, cadv_line, wadv_line], loc='upper right')
 
-    hour_difference = (ds_latlon['time'][i] - init_time) / np.timedelta64(1, 'h')
+    hour_difference = (ds_latlon[matching_dim][i] - init_time) / np.timedelta64(1, 'h')
 
-    plt.title(f"{ds_latlon['time'][0].dt.strftime('%H00 UTC').item()} GFS 500-hPa Geopotential Heights, Absolute Vorticity, and 850-hPa Temperature Advection | {ds.time.dt.strftime('%Y-%m-%d %H00 UTC').item()} | FH: {hour_difference:.0f}", fontsize=12)
+    plt.title(f"{ds_latlon[matching_dim][0].dt.strftime('%H00 UTC').item()} GFS 500-hPa Absolute Vorticity, Geopotential Heights, and 850-hPa Temperature Advection | {ds_latlon[matching_dim][i].dt.strftime('%Y-%m-%d %H00 UTC').item()} | FH: {hour_difference:.0f}", fontsize=12)
     plt.colorbar(vort_cf, orientation='horizontal', label='Absolute Vorticity ($10^{-5}$ s$^{-1}$)', pad=0.05, aspect=50)
     plt.tight_layout()
-    #plt.show()
-    plt.savefig(f'gfs/vort/{hour_difference:.0f}.png')
+    plt.show()
+    #plt.savefig(f'gfs/vort/{hour_difference:.0f}.png')
+
+    iteration_end = time.time()
+    print(f'Iteration {i} Processing Time:', round((iteration_end - iteration_start), 2), 'seconds.')
+
+print('\nTotal Processing Time:', round((time.time() - script_start), 2), 'seconds.')
