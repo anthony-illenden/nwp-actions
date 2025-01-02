@@ -8,6 +8,11 @@ import xarray as xr
 from scipy.ndimage import gaussian_filter
 from metpy.units import units
 import pandas as pd
+import time
+
+print('---------------------------------------')
+print('NAM Vorticity Script - Script started.')
+print('---------------------------------------')
 
 def find_time_dim(ds, var_name):
     possible_time_dims = ['time', 'time1', 'time2', 'time3']
@@ -44,6 +49,8 @@ def find_press_var(var, time_basename='isobaric'):
             return var.coords[coord_name]
     raise ValueError('No time variable found for ' + var.name)
 
+script_start = time.time()
+
 tds_nam = TDSCatalog('https://thredds.ucar.edu/thredds/catalog/grib/NCEP/NAM/CONUS_12km/latest.html')
 nam_ds = tds_nam.datasets[0]
 ds = xr.open_dataset(nam_ds.access_urls['OPENDAP'])
@@ -67,7 +74,8 @@ for dim, size in ds.dims.items():
         matching_dim = dim
         break  # Exit loop once a match is found
 
-for i in range(0, 29):
+for i in range(0, 29, 2):
+    iteration_start = time.time()
     ds_loop = ds.isel(time=i)
 
     # Extract the variables
@@ -100,14 +108,14 @@ for i in range(0, 29):
 
     vort_cf = plt.contourf(uwnd_500['longitude'], uwnd_500['latitude'], absolute_vorticity_smoothed * 1e5, cmap='plasma_r', levels=np.arange(10,65,5), extend='max', transform=ccrs.PlateCarree())
 
-    cadv = plt.contour(uwnd_500['longitude'], uwnd_500['latitude'], tadv_850_smoothed, levels=np.arange(-10, 0, 0.5), colors='blue', linewidths=0.75, linestyles='solid', transform=ccrs.PlateCarree())
+    cadv = plt.contour(uwnd_500['longitude'], uwnd_500['latitude'], tadv_850_smoothed, levels=np.arange(-10, -1, 0.5), colors='blue', linewidths=0.75, linestyles='solid', transform=ccrs.PlateCarree())
     try:
-        plt.clabel(cadv, fontsize=10, inline=1, inline_spacing=3, fmt='%d', rightside_up=True, use_clabeltext=True)
+        plt.clabel(cadv, fontsize=10, inline=1, inline_spacing=3, fmt='%.1f', rightside_up=True, use_clabeltext=True)
     except IndexError:
         print("No contours to label for cadv.")
-    wadv = ax.contour(uwnd_500['longitude'], uwnd_500['latitude'], tadv_850_smoothed, levels=np.arange(0.5, 10, 0.5), colors='red', linewidths=0.75, linestyles='solid', transform=ccrs.PlateCarree())
+    wadv = ax.contour(uwnd_500['longitude'], uwnd_500['latitude'], tadv_850_smoothed, levels=np.arange(1, 10, 0.5), colors='red', linewidths=0.75, linestyles='solid', transform=ccrs.PlateCarree())
     try:
-        plt.clabel(wadv, fontsize=10, inline=1, inline_spacing=3, fmt='%d', rightside_up=True, use_clabeltext=True)
+        plt.clabel(wadv, fontsize=10, inline=1, inline_spacing=3, fmt='%.1f', rightside_up=True, use_clabeltext=True)
     except IndexError:
         print("No contours to label for wadv.")
 
@@ -122,5 +130,9 @@ for i in range(0, 29):
     plt.title(f"{init_time_ts.strftime('%H00 UTC')} NAM 500-hPa Absolute Vorticity, Geopotential Heights, and 850-hPa Temperature Advection | {ds['time'][i].dt.strftime('%Y-%m-%d %H00 UTC').item()} | FH: {hour_difference:.0f}", fontsize=12)
     plt.colorbar(vort_cf, orientation='horizontal', label='Absolute Vorticity ($10^{-5}$ s$^{-1}$)', pad=0.05, aspect=50)
     plt.tight_layout()
-    #plt.show()
     plt.savefig(f'nam/vort/{hour_difference:.0f}.png')
+    
+    iteration_end = time.time()
+    print(f'Iteration {i} Processing Time:', round((iteration_end - iteration_start), 2), 'seconds.')
+
+print('\nTotal Processing Time:', round((time.time() - script_start), 2), 'seconds.')
