@@ -8,7 +8,52 @@ import xarray as xr
 from scipy.ndimage import gaussian_filter
 from metpy.units import units
 import metpy
+import time
 
+script_start = time.time()
+
+print('---------------------------------------')
+print('GFS Surface Script - Script started.')
+print('---------------------------------------')
+
+def plot_maxmin_points(lon, lat, data, extrema, nsize, symbol, color='k',
+                       plotValue=True, transform=None, ax=None, threshold=0.5):
+    from scipy.ndimage import maximum_filter, minimum_filter
+    import numpy as np
+
+    if ax is None:
+        ax = plt.gca()
+
+    if extrema == 'max':
+        data_ext = maximum_filter(data, nsize, mode='nearest')
+    elif extrema == 'min':
+        data_ext = minimum_filter(data, nsize, mode='nearest')
+    else:
+        raise ValueError('Value for extrema must be either max or min')
+
+    mxy, mxx = np.where(data_ext == data)
+
+    # To keep track of unique points
+    plotted_points = []
+
+    for i in range(len(mxy)):
+        lon_coord = lon[mxx[i]].item()
+        lat_coord = lat[mxy[i]].item()
+        
+        # Check distance from already plotted points
+        if not any(np.sqrt((lon_coord - lon_p)**2 + (lat_coord - lat_p)**2) < threshold for lon_p, lat_p in plotted_points):
+            ax.text(lon_coord, lat_coord, symbol, color=color, size=24,
+                    clip_on=True, clip_box=ax.bbox, horizontalalignment='center', 
+                    verticalalignment='center', transform=transform)
+            ax.text(lon_coord, lat_coord, 
+                    '\n' + str(int(data[mxy[i], mxx[i]])), 
+                    color=color, size=12, clip_on=True, clip_box=ax.bbox, 
+                    fontweight='bold', horizontalalignment='center', 
+                    verticalalignment='top', transform=transform)
+
+            # Mark this point as plotted
+            plotted_points.append((lon_coord, lat_coord))
+            
 def find_time_dim(ds, var_name):
     possible_time_dims = ['time', 'time1', 'time2', 'time3']
     time_dim = None
@@ -69,7 +114,8 @@ for dim, size in ds_latlon.dims.items():
         matching_dim = dim
         break  # Exit loop once a match is found
 
-for i in range(0, 29):
+for i in range(0, 29, 2):
+    iteration_start = time.time()
     ds = ds_latlon.isel(**{matching_dim: i})
 
     # Extract the variables
@@ -110,7 +156,10 @@ for i in range(0, 29):
 
     dbz_cf = plt.contourf(lons, lats, dbz, levels=np.arange(5, 80, 5), cmap=metpy.plots.ctables.registry.get_colortable('NWSReflectivity'), transform=ccrs.PlateCarree())
 
-    hour_difference = (ds['time'][i] - init_time) / np.timedelta64(1, 'h')
+    plot_maxmin_points(lons, lats, mslp_smoothed, 'max', 50, symbol='H', color='b', transform=ccrs.PlateCarree(), ax=ax)
+    plot_maxmin_points(lons, lats, mslp_smoothed, 'min', 25, symbol='L', color='r', transform=ccrs.PlateCarree(), ax=ax)
+
+    hour_difference = (ds_latlon[matching_dim][i] - init_time) / np.timedelta64(1, 'h')
 
     # Adding the legend
     isobar_lines = plt.Line2D([0], [0], color='black', linewidth=1, label='MSLP (hPa)')
@@ -118,8 +167,12 @@ for i in range(0, 29):
     wadv_line = plt.Line2D([0], [0], color='red', linestyle='dashed', linewidth=1, label='Thickness >540 (dam)')
     ax.legend(handles=[isobar_lines, cadv_line, wadv_line], loc='upper right')
 
-    plt.title(f"{ds_latlon[matching_dim][0].dt.strftime('%H00 UTC').item()} GFS 100-500 hPa Thickness, MSLP, and Reflectivity | {ds[matching_dim].dt.strftime('%Y-%m-%d %H00 UTC').item()} | FH: {hour_difference:.0f}", fontsize=12)
+    plt.title(f"{ds_latlon[matching_dim][0].dt.strftime('%H00 UTC').item()} GFS 1000-500 hPa Thickness, MSLP, and Reflectivity | {ds_latlon[matching_dim][i].dt.strftime('%Y-%m-%d %H00 UTC').item()} | FH: {hour_difference:.0f}", fontsize=12)
     plt.colorbar(dbz_cf, orientation='horizontal', label='Reflectivity (dBZ)', pad=0.05, aspect=50)
     plt.tight_layout()
     #plt.show()
     plt.savefig(f'gfs/sfc/{hour_difference:.0f}.png')
+    iteration_end = time.time()
+    print(f'Iteration {i} Processing Time:', round((iteration_end - iteration_start), 2), 'seconds.')
+
+print('\nTotal Processing Time:', round((time.time() - script_start), 2), 'seconds.')
