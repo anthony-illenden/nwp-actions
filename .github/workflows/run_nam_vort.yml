@@ -1,8 +1,9 @@
 name: Update NAM Vorticity Plots
 
 on:
+  push:
   schedule: 
-    - cron: '00 2,8,14,20 * * *'  
+    - cron: '00 2,8,14,20 * * *' 
 
 jobs:
   update_gfs_vorticity_plots:
