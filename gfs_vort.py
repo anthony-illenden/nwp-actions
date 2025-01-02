@@ -130,12 +130,10 @@ for i in range(0, 29, 2):
 
     hour_difference = (ds_latlon[matching_dim][i] - init_time) / np.timedelta64(1, 'h')
 
-    plt.title(f"{ds_latlon[matching_dim][0].dt.strftime('%H00 UTC').item()} GFS 500-hPa Absolute Vorticity, Geopotential Heights, and 850-hPa Temperature Advection | {ds_latlon[matching_dim][i].dt.strftime('%Y-%m-%d %H00 UTC').item()} | FH: {hour_difference:.0f}", fontsize=12)
+    plt.title(f"{ds_latlon[matching_dim][0].dt.strftime('%H00 UTC').item()} GFS 500-hPa Geopotential Heights, Absolute Vorticity, and 850-hPa Temperature Advection | {ds_latlon[matching_dim][i].dt.strftime('%Y-%m-%d %H00 UTC').item()} | FH: {hour_difference:.0f}", fontsize=12)
     plt.colorbar(vort_cf, orientation='horizontal', label='Absolute Vorticity ($10^{-5}$ s$^{-1}$)', pad=0.05, aspect=50)
     plt.tight_layout()
-    plt.show()
-    #plt.savefig(f'gfs/vort/{hour_difference:.0f}.png')
-
+    plt.savefig(f'gfs/vort/{hour_difference:.0f}.png')
     iteration_end = time.time()
     print(f'Iteration {i} Processing Time:', round((iteration_end - iteration_start), 2), 'seconds.')
 
