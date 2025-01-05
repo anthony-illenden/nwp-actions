@@ -3,7 +3,7 @@ name: Update GFS SFC Plots
 on:
   push:
   schedule: 
-    - cron: '00 2,8,14,20 * * *'
+    - cron: '0 */2 * * *'
 
 jobs:
   update_gfs_sfc_plots:
